@@ -23,793 +23,849 @@
    when launching from a USB drive where I/O can be slow on first load.
    -------------------------------------------------------------------------- */
 
-@font-face {
-  font-family: "Helvetica Neue";
-  src: url("../assets/fonts/HelveticaNeue-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Helvetica Neue";
-  src: url("../assets/fonts/HelveticaNeue-Roman.otf") format("opentype"),
-       url("../assets/fonts/HelveticaNeue-Medium.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Helvetica Neue";
-  src: url("../assets/fonts/HelveticaNeue-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Helvetica Neue";
-  src: url("../assets/fonts/HelveticaNeue-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Helvetica Neue Condensed";
-  src: url("../assets/fonts/HelveticaNeue-CondensedBold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "IBM Plex Mono";
-  src: url("../assets/fonts/IBMPlexMono-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  src: url("../assets/fonts/IBMPlexMono-Medium.ttf") format("truetype");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-
-/* --------------------------------------------------------------------------
-   1. DESIGN TOKENS — single source of truth
-   -------------------------------------------------------------------------- */
-:root {
-  /* Anchor palette */
-  --navy:                  #162235;
-  --off-white:             #F2F2EE;
-  --card-contained-dark:   #1F2C3F;   /* default card on navy */
-  --card-emphasized-dark:  #2D3D54;   /* emphasis card on navy */
-  --charcoal:              #1A1F2E;
-  --mid-gray:              #4A5260;
-  --light-gray:            #B8BCC4;
-
-  /* Gradient triad: data → intelligence → action */
-  --grad-data:         #B7D9FF;
-  --grad-intelligence: #53C9D0;
-  --grad-action:       #35AF6F;
-  --gradient: linear-gradient(
-    90deg,
-    var(--grad-data) 0%,
-    var(--grad-intelligence) 50%,
-    var(--grad-action) 100%
-  );
-
-  /* Typography */
-  --font-brand:           "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-brand-condensed: "Helvetica Neue Condensed", "Helvetica Neue",
-                          "Arial Narrow", Helvetica, Arial, sans-serif;
-  --font-mono:            "IBM Plex Mono", "SF Mono", Menlo, Monaco,
-                          Consolas, monospace;
-
-  /* Spacing scale (Presight: 8 / 16 / 32 / 64) */
-  --space-xs: 8px;
-  --space-sm: 16px;
-  --space-md: 32px;
-  --space-lg: 64px;
-
-  /* Layout */
-  --margin-page: 80px;
-  --gutter: 24px;
-  --topbar-height: 96px;
-  --card-radius: 4px;
-  --sidenav-width: 64px;           /* universal left nav bar */
-  --sidenav-bg: #1B2C42;           /* lifted from navy ground */
-
-  /* Hover scale per card type — push these higher for a bolder effect, lower
-     for a more conservative one. Setting all to 1 disables hover scale. */
-  --scale-hero:     1.04;
-  --scale-category: 1.07;
-  --scale-product:  1.08;
-  --scale-video:    1.06;
-  --scale-demo:     1.05;
-
-  /* View transition timing */
-  --view-transition: 350ms;
-}
-
-
-/* --------------------------------------------------------------------------
-   2. RESET + BASE
-   -------------------------------------------------------------------------- */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-  width: 100%;
-  background: var(--navy) url('../assets/bg.svg') center center / cover no-repeat;
-  color: var(--off-white);
-  font-family: var(--font-brand);
-  font-size: 16px;
-  line-height: 1.5;
-  overflow: hidden;
-  position: relative;             /* containing block for absolute-positioned views */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-@media (min-width: 1280px) {
-  html { font-size: clamp(14px, 0.9vw, 19px); }
-}
-
-button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  padding: 0;
-  letter-spacing: inherit;
-}
-
-img, svg, video { display: block; max-width: 100%; }
-
-
-/* --------------------------------------------------------------------------
-   3. TYPOGRAPHY REGISTERS — Presight system
-   -------------------------------------------------------------------------- */
-.declarative {
-  font-family: var(--font-brand-condensed);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: -0.01em;
-  line-height: 0.95;
-}
-
-.technical {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  color: var(--off-white);
-}
-
-.gradient-stamp {
-  background-image: var(--gradient);
-  color: var(--navy);
-  padding: 0 0.1em;
-}
-
-
-/* --------------------------------------------------------------------------
-   4. VIEWS — fade + subtle scale transition between screens
-   Each view stacks absolutely so the new one fades in over the old one.
-   Visibility is delayed on fade-out so events don't fire after the fade.
-   -------------------------------------------------------------------------- */
-.view {
-  position: absolute;
-  top: 0;
-  left: var(--sidenav-width);                       /* clears the left sidenav */
-  width: calc(100% - var(--sidenav-width));
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: scale(0.99);
-  transition: opacity      var(--view-transition) ease-out,
-              transform    var(--view-transition) ease-out,
-              visibility   0s linear var(--view-transition);
-}
-.view.is-active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: scale(1);
-  transition: opacity      var(--view-transition) ease-out,
-              transform    var(--view-transition) ease-out,
-              visibility   0s linear 0s;
-}
-
-
-/* (Landing view removed — visitors now land directly on the videos view.) */
-
-
-/* ==========================================================================
-   UNIVERSAL NAV — fixed left sidebar with iris mark.
-   Sits over everything so it persists across all views.
-   ========================================================================== */
-.sidenav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: var(--sidenav-width);
-  background: var(--sidenav-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: var(--space-md);
-  z-index: 100;
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
-  transition: transform var(--view-transition) ease-out;
-}
-/* When the player view is active, slide the sidenav off-screen */
-body:has(.view-player.is-active) .sidenav {
-  transform: translateX(-100%);
-}
-.sidenav-iris {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: block;
-}
-
-
-/* ==========================================================================
-   SHARED: TOPBAR (videos, collection, demos)
-   ========================================================================== */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;        /* nav-only now; logo moved into hero column */
-  padding: var(--space-md) var(--margin-page);
-  height: var(--topbar-height);
-  flex-shrink: 0;
-}
-
-.topbar-logo {
-  display: inline-flex;
-  align-items: center;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.topbar-logo img {
-  height: 48px;
-  width: auto;
-  display: block;
-}
-@media (max-width: 1280px) {
-  .topbar-logo img { height: 40px; }
-}
-
-.topbar-nav {
-  display: flex;
-  gap: var(--space-md);
-  align-items: center;
-}
-
-.nav-link {
-  font-family: var(--font-brand);
-  font-size: clamp(14px, 1.1vw, 20px);
-  color: var(--light-gray);
-  font-weight: 300;
-  padding: var(--space-xs) 0;
-  transition: color 200ms ease;
-}
-.nav-link:hover { color: var(--off-white); }
-.nav-link-active {
-  color: var(--off-white);
-  font-weight: 700;
-}
-
-/* Back-button variant: separator between back and the section nav */
-.nav-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding-right: var(--space-md);
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
-  margin-right: var(--space-xs);
-  color: var(--off-white);
-  font-weight: 400;
-}
-.nav-back:hover { color: var(--off-white); }
-.nav-arrow {
-  font-size: 1.1em;
-  line-height: 1;
-}
-
-
-/* ==========================================================================
-   VIEW: VIDEOS — entry point. Two-column hero: text left, video right.
-   ========================================================================== */
-.view-videos { padding: 0; overflow-y: auto; }
-
-.videos-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--space-lg);
-  align-items: center;
-  padding: var(--space-md) var(--margin-page);
-  min-height: 0;
-}
-
-/* Left column — Presight wordmark + declarative headline + supporting tagline */
-.videos-hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-.videos-hero-logo {
-  width: auto;
-  height: clamp(48px, 4vw, 51px);    /* capped at 1280px-target size */
-  margin-bottom: var(--space-xs);
-  align-self: flex-start;
-}
-
-.videos-headline {
-  font-size: clamp(48px, 6.5vw, 83px);   /* capped at 1280px-target size */
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  align-items: flex-start;
-}
-.videos-headline .gradient-stamp {
-  align-self: flex-start;   /* the stamp wraps only as wide as "APPLIED." */
-}
-
-.videos-tagline {
-  font-family: var(--font-brand);
-  font-weight: 300;
-  color: var(--light-gray);
-  font-size: clamp(14px, 1.1vw, 22px);
-  line-height: 1.55;
-  max-width: 44ch;                  /* keeps body copy readable on wide screens */
-}
-
-/* Right column — the featured video card. Caption overlays the image. */
-.hero-card {
-  width: 100%;
-  position: relative;                  /* containing block for the overlay */
-  display: block;
-  border-radius: var(--card-radius);
-  overflow: hidden;
-  background: var(--card-contained-dark);
-  transition: transform 300ms cubic-bezier(0.2, 0, 0.2, 1);
-  text-align: left;
-  will-change: transform;
-}
-.hero-card:hover {
-  background: var(--card-emphasized-dark);
-  transform: scale(var(--scale-hero));
-}
-
-.hero-thumb {
-  width: 100%;
-  aspect-ratio: 847 / 360;     /* ultra-wide cinematic hero */
-  object-fit: cover;
-  background: var(--card-emphasized-dark);
-  display: block;
-}
-.hero-caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: var(--space-md);
-  /* Subtle bottom-edge dark gradient so caption stays readable on bright frames */
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.25) 40%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  pointer-events: none;
-}
-.hero-caption-text {
-  font-family: var(--font-brand);
-  font-weight: 400;
-  font-size: clamp(13px, 1vw, 17px);
-  color: var(--off-white);
-}
-
-
-/* ==========================================================================
-   VIEW: COLLECTION — distinct screen for any category or product
-   ========================================================================== */
-.view-collection { padding: 0; overflow-y: auto; }
-
-.collection-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-lg);
-  align-items: center;
-  padding: var(--space-md) var(--margin-page);
-  min-height: 0;
-}
-
-.collection-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-.collection-title {
-  font-size: clamp(40px, 4.5vw, 88px);
-  margin: 0;
-}
-.collection-description {
-  font-family: var(--font-brand);
-  font-weight: 300;
-  font-size: clamp(14px, 1.1vw, 20px);
-  color: var(--light-gray);
-  line-height: 1.5;
-  max-width: 48ch;
-  white-space: pre-line;     /* respects \n in content.js */
-}
-
-.collection-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm);
-}
-
-.video-card {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--card-radius);
-  overflow: hidden;
-  background: var(--card-contained-dark);
-  cursor: pointer;
-  transition: transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
-  will-change: transform;
-}
-.video-card:hover { transform: scale(var(--scale-video)); }
-.video-card img,
-.video-card video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.video-card-caption {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: var(--space-sm);
-  font-family: var(--font-brand);
-  font-size: 0.875rem;
-  color: var(--off-white);
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7) 100%);
-}
-
-
-/* ==========================================================================
-   FILTER ROWS — categories and products
-   Used in BOTH the videos and collection views.
-   ========================================================================== */
-.filter-row {
-  padding: var(--space-md) var(--margin-page);
-  flex-shrink: 0;
-}
-.filter-row-label {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--off-white);
-  margin-bottom: var(--space-sm);
-}
-
-.filter-buttons {
-  display: grid;
-  gap: var(--gutter);
-}
-.filter-btn {
-  background: var(--card-contained-dark);
-  border-radius: var(--card-radius);
-  padding: var(--space-md) var(--space-sm);
-  min-height: 72px;                /* fixed height; width flows with the grid */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: var(--font-brand);
-  font-size: clamp(11px, 0.85vw, 15px);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--off-white);
-  transition: background-color 200ms ease,
-              transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
-  border: 1px solid transparent;
-  will-change: transform;
-}
-.filter-btn:hover {
-  background: var(--card-emphasized-dark);
-  transform: scale(var(--scale-category));
-}
-.filter-btn-active {
-  border-color: var(--off-white);
-}
-
-.filter-row-products { padding-bottom: var(--space-lg); }
-
-.products-row {
-  display: grid;
-  gap: 12px;
-}
-.product-card {
-  background: var(--card-contained-dark);
-  border-radius: var(--card-radius);
-  padding: var(--space-sm) var(--space-xs);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  text-align: center;
-  transition: background-color 200ms ease,
-              transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
-  min-height: 140px;
-  border: 1px solid transparent;
-  will-change: transform;
-}
-.product-card:hover {
-  background: var(--card-emphasized-dark);
-  transform: scale(var(--scale-product));
-}
-.product-card-active { border-color: var(--off-white); }
-
-.product-icon {
-  width: clamp(48px, 4vw, 64px);
-  height: clamp(48px, 4vw, 64px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.product-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.product-label {
-  font-family: var(--font-brand);
-  font-weight: 600;
-  font-size: clamp(9px, 0.65vw, 12px);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  color: var(--off-white);
-}
-
-
-/* ==========================================================================
-   VIEW: DEMOS
-   ========================================================================== */
-.view-demos { overflow-y: auto; }
-
-.demos-title-block {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.demos-title-icon svg { width: 56px; height: 56px; }
-.demos-title { font-size: clamp(32px, 3vw, 56px); }
-
-.demos-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-md) var(--margin-page) var(--space-lg);
-}
-.demos-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--gutter);
-}
-.demo-card {
-  background: var(--card-contained-dark);
-  border-radius: var(--card-radius);
-  padding: var(--space-md);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-md);
-  min-height: 200px;
-  transition: background-color 200ms ease,
-              transform 300ms cubic-bezier(0.2, 0, 0.2, 1);
-  text-align: left;
-  will-change: transform;
-}
-.demo-card:hover {
-  background: var(--card-emphasized-dark);
-  transform: scale(var(--scale-demo));
-}
-
-.demo-card-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-.demo-card-title {
-  font-family: var(--font-brand-condensed);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: clamp(14px, 1.2vw, 22px);
-  letter-spacing: 0.02em;
-  color: var(--off-white);
-}
-.demo-card-subtitle {
-  font-family: var(--font-brand);
-  font-weight: 300;
-  font-size: clamp(12px, 0.85vw, 15px);
-  color: var(--light-gray);
-}
-.demo-card-image {
-  width: 50%;
-  aspect-ratio: 16 / 9;
-  background: var(--card-emphasized-dark);
-  border-radius: 2px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.demo-card-image img,
-.demo-card-image video { width: 100%; height: 100%; object-fit: cover; }
-
-
-/* ==========================================================================
-   VIEW: PLAYER (fullscreen)
-   ========================================================================== */
-.view-player {
-  background: #000;
-  position: relative;
-  left: 0;                  /* override .view default: fullscreen video uses the full width */
-  width: 100%;
-}
-
-.player-topbar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-md) var(--margin-page);
-}
-.player-lang-toggle { display: flex; gap: var(--space-sm); }
-.lang-btn {
-  font-family: var(--font-brand);
-  font-size: clamp(14px, 1.1vw, 20px);
-  font-weight: 300;
-  color: var(--light-gray);
-  padding: var(--space-xs);
-  transition: color 200ms ease;
-}
-.lang-btn:hover { color: var(--off-white); }
-.lang-btn-active {
-  color: var(--off-white);
-  font-weight: 700;
-}
-.player-back {
-  font-family: var(--font-brand);
-  font-size: clamp(14px, 1.1vw, 20px);
-  color: var(--off-white);
-  display: inline-flex;
-  gap: var(--space-xs);
-  align-items: center;
-}
-
-.player-stage {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#player-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;     /* fill viewport, preserve aspect ratio */
-}
-
-.player-fallback {
-  text-align: center;
-  color: var(--light-gray);
-  padding: var(--space-lg);
-  max-width: 60ch;
-}
-.player-fallback-title {
-  font-family: var(--font-brand-condensed);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: clamp(20px, 2vw, 36px);
-  color: var(--off-white);
-  margin-bottom: var(--space-md);
-}
-.player-fallback-msg code {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 2px;
-}
-
-
-/* ==========================================================================
-   PLACEHOLDER STATES — when image / video files are missing
-   ========================================================================== */
-.is-missing {
-  width: 100%;
-  height: 100%;
-  min-height: 80px;
-  background: var(--card-emphasized-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--light-gray);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.is-missing::after { content: "Thumbnail missing"; }
-
-
-/* ==========================================================================
-   ACCESSIBILITY — respect the user's OS-level reduced-motion preference
-   When set, we disable both view transitions AND hover scale.
-   ========================================================================== */
-@media (prefers-reduced-motion: reduce) {
+   @font-face {
+    font-family: "Helvetica Neue";
+    src: url("../assets/fonts/HelveticaNeue-Light.ttf") format("truetype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue";
+    src: url("../assets/fonts/HelveticaNeue-Roman.otf") format("opentype"),
+         url("../assets/fonts/HelveticaNeue-Medium.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue";
+    src: url("../assets/fonts/HelveticaNeue-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue";
+    src: url("../assets/fonts/HelveticaNeue-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue Condensed";
+    src: url("../assets/fonts/HelveticaNeue-CondensedBold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  @font-face {
+    font-family: "IBM Plex Mono";
+    src: url("../assets/fonts/IBMPlexMono-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "IBM Plex Mono";
+    src: url("../assets/fonts/IBMPlexMono-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  
+  /* --------------------------------------------------------------------------
+     1. DESIGN TOKENS — single source of truth
+     -------------------------------------------------------------------------- */
+  :root {
+    /* Anchor palette */
+    --navy:                  #162235;
+    --off-white:             #F2F2EE;
+    --card-contained-dark:   #1F2C3F;   /* default card on navy */
+    --card-emphasized-dark:  #2D3D54;   /* emphasis card on navy */
+    --charcoal:              #1A1F2E;
+    --mid-gray:              #4A5260;
+    --light-gray:            #B8BCC4;
+  
+    /* Gradient triad: data → intelligence → action */
+    --grad-data:         #B7D9FF;
+    --grad-intelligence: #53C9D0;
+    --grad-action:       #35AF6F;
+    --gradient: linear-gradient(
+      90deg,
+      var(--grad-data) 0%,
+      var(--grad-intelligence) 50%,
+      var(--grad-action) 100%
+    );
+  
+    /* Typography */
+    --font-brand:           "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-brand-condensed: "Helvetica Neue Condensed", "Helvetica Neue",
+                            "Arial Narrow", Helvetica, Arial, sans-serif;
+    --font-mono:            "IBM Plex Mono", "SF Mono", Menlo, Monaco,
+                            Consolas, monospace;
+  
+    /* Spacing scale (Presight: 8 / 16 / 32 / 64) */
+    --space-xs: 8px;
+    --space-sm: 16px;
+    --space-md: 32px;
+    --space-lg: 64px;
+  
+    /* Layout */
+    --margin-page: 80px;
+    --gutter: 24px;
+    --topbar-height: 96px;
+    --card-radius: 4px;
+    --sidenav-width: 64px;           /* universal left nav bar */
+    --sidenav-bg: #1B2C42;           /* lifted from navy ground */
+  
+    /* Hover scale per card type — push these higher for a bolder effect, lower
+       for a more conservative one. Setting all to 1 disables hover scale. */
+    --scale-hero:     1.04;
+    --scale-category: 1.07;
+    --scale-product:  1.08;
+    --scale-video:    1.06;
+    --scale-demo:     1.05;
+  
+    /* View transition timing */
+    --view-transition: 350ms;
+  }
+  
+  
+  /* --------------------------------------------------------------------------
+     2. RESET + BASE
+     -------------------------------------------------------------------------- */
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
-  .view, .view.is-active { transform: none !important; }
-  .hero-card:hover, .filter-btn:hover,
-  .product-card:hover, .video-card:hover, .demo-card:hover {
-    transform: none !important;
+  
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: var(--navy) url('../assets/bg.svg') center center / cover no-repeat;
+    color: var(--off-white);
+    font-family: var(--font-brand);
+    font-size: 16px;
+    line-height: 1.5;
+    overflow: hidden;
+    position: relative;             /* containing block for absolute-positioned views */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-}
-
-
-/* ==========================================================================
-   RESPONSIVE TWEAKS — works at 4:3, 16:9, 16:10, and 21:9
-   ========================================================================== */
-@media (max-width: 1280px) {
-  :root {
-    --margin-page: 48px;
-    --topbar-height: 80px;
-    --sidenav-width: 56px;
+  
+  @media (min-width: 1280px) {
+    html { font-size: clamp(14px, 0.9vw, 19px); }
   }
-  .sidenav-iris { width: 32px; height: 32px; }
-}
-@media (max-width: 900px) {
-  :root {
-    --margin-page: 24px;
-    --gutter: 16px;
-    --sidenav-width: 48px;
+  
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+    letter-spacing: inherit;
   }
-  .sidenav-iris { width: 28px; height: 28px; }
-  .videos-main { grid-template-columns: 1fr; gap: var(--space-md); }
-  .collection-main { grid-template-columns: 1fr; }
-  .demos-grid { grid-template-columns: 1fr 1fr; }
-}
+  
+  img, svg, video { display: block; max-width: 100%; }
+  
+  
+  /* --------------------------------------------------------------------------
+     3. TYPOGRAPHY REGISTERS — Presight system
+     -------------------------------------------------------------------------- */
+  .declarative {
+    font-family: var(--font-brand-condensed);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    line-height: 0.95;
+  }
+  
+  .technical {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--off-white);
+  }
+  
+  .gradient-stamp {
+    background-image: var(--gradient);
+    color: var(--navy);
+    padding: 0 0.1em;
+  }
+  
+  
+  /* --------------------------------------------------------------------------
+     4. VIEWS — fade + subtle scale transition between screens
+     Each view stacks absolutely so the new one fades in over the old one.
+     Visibility is delayed on fade-out so events don't fire after the fade.
+     -------------------------------------------------------------------------- */
+  .view {
+    position: absolute;
+    top: 0;
+    left: var(--sidenav-width);                       /* clears the left sidenav */
+    width: calc(100% - var(--sidenav-width));
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.99);
+    transition: opacity      var(--view-transition) ease-out,
+                transform    var(--view-transition) ease-out,
+                visibility   0s linear var(--view-transition);
+  }
+  .view.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+    transition: opacity      var(--view-transition) ease-out,
+                transform    var(--view-transition) ease-out,
+                visibility   0s linear 0s;
+  }
+  
+  
+  /* (Landing view removed — visitors now land directly on the videos view.) */
+  
+  
+  /* ==========================================================================
+     UNIVERSAL NAV — fixed left sidebar with iris mark.
+     Sits over everything so it persists across all views.
+     ========================================================================== */
+  .sidenav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidenav-width);
+    background: var(--sidenav-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--space-md);
+    z-index: 100;
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    transition: transform var(--view-transition) ease-out;
+  }
+  /* When the player view is active, slide the sidenav off-screen */
+  body:has(.view-player.is-active) .sidenav {
+    transform: translateX(-100%);
+  }
+  .sidenav-iris {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: block;
+  }
+  
+  
+  /* ==========================================================================
+     SHARED: TOPBAR (videos, collection, demos)
+     ========================================================================== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;        /* nav-only now; logo moved into hero column */
+    padding: var(--space-md) var(--margin-page);
+    height: var(--topbar-height);
+    flex-shrink: 0;
+  }
+  
+  .topbar-logo {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .topbar-logo img {
+    height: 48px;
+    width: auto;
+    display: block;
+  }
+  @media (max-width: 1280px) {
+    .topbar-logo img { height: 40px; }
+  }
+  
+  .topbar-nav {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+  }
+  
+  .nav-link {
+    font-family: var(--font-brand);
+    font-size: clamp(14px, 1.1vw, 20px);
+    color: var(--light-gray);
+    font-weight: 300;
+    padding: var(--space-xs) 0;
+    transition: color 200ms ease;
+  }
+  .nav-link:hover { color: var(--off-white); }
+  .nav-link-active {
+    color: var(--off-white);
+    font-weight: 700;
+  }
+  
+  /* Back-button variant: separator between back and the section nav */
+  .nav-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding-right: var(--space-md);
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    margin-right: var(--space-xs);
+    color: var(--off-white);
+    font-weight: 400;
+  }
+  .nav-back:hover { color: var(--off-white); }
+  .nav-arrow {
+    font-size: 1.1em;
+    line-height: 1;
+  }
+  
+  
+  /* ==========================================================================
+     VIEW: VIDEOS — entry point. Two-column hero: text left, video right.
+     ========================================================================== */
+  .view-videos { padding: 0; overflow-y: auto; }
+  
+  .videos-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: var(--space-lg);
+    align-items: center;
+    padding: var(--space-md) var(--margin-page);
+    min-height: 0;
+  }
+  
+  /* Left column — Presight wordmark + declarative headline + supporting tagline */
+  .videos-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .videos-hero-logo {
+    width: auto;
+    height: clamp(48px, 4vw, 51px);    /* capped at 1280px-target size */
+    margin-bottom: var(--space-xs);
+    align-self: flex-start;
+  }
+  
+  .videos-headline {
+    font-size: clamp(48px, 6.5vw, 83px);   /* capped at 1280px-target size */
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: flex-start;
+  }
+  .videos-headline .gradient-stamp {
+    align-self: flex-start;   /* the stamp wraps only as wide as "APPLIED." */
+  }
+  
+  .videos-tagline {
+    font-family: var(--font-brand);
+    font-weight: 300;
+    color: var(--light-gray);
+    font-size: clamp(14px, 1.1vw, 22px);
+    line-height: 1.55;
+    max-width: 44ch;                  /* keeps body copy readable on wide screens */
+  }
+  
+  /* Right column — the featured video card. Caption overlays the image. */
+  .hero-card {
+    width: 100%;
+    position: relative;                  /* containing block for the overlay */
+    display: block;
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    background: var(--card-contained-dark);
+    transition: transform 300ms cubic-bezier(0.2, 0, 0.2, 1);
+    text-align: left;
+    will-change: transform;
+  }
+  .hero-card:hover {
+    background: var(--card-emphasized-dark);
+    transform: scale(var(--scale-hero));
+  }
+  
+  .hero-thumb {
+    width: 100%;
+    aspect-ratio: 847 / 360;     /* ultra-wide cinematic hero */
+    object-fit: cover;
+    background: var(--card-emphasized-dark);
+    display: block;
+  }
+  .hero-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--space-md);
+    /* Subtle bottom-edge dark gradient so caption stays readable on bright frames */
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.25) 40%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+  }
+  .hero-caption-text {
+    font-family: var(--font-brand);
+    font-weight: 400;
+    font-size: clamp(13px, 1vw, 17px);
+    color: var(--off-white);
+  }
+  
+  
+  /* ==========================================================================
+     VIEW: COLLECTION — distinct screen for any category or product
+     ========================================================================== */
+  .view-collection { padding: 0; overflow-y: auto; }
+  
+  .collection-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: 0 var(--margin-page) var(--space-md);
+    align-items: flex-start;
+  }
+  
+  .collection-title {
+    font-size: clamp(32px, 3.75vw, 48px);
+    line-height: 0.7;
+    letter-spacing: -0.02em;
+    padding: 0.18em 0.12em 0.24em;
+    display: inline-block;
+    align-self: flex-start;
+  }
+  
+  .collection-description {
+    font-family: var(--font-brand);
+    font-weight: 300;
+    font-size: clamp(14px, 1.1vw, 20px);
+    color: var(--light-gray);
+    line-height: 1.3;
+    max-width: 100%;
+    white-space: pre-line;     /* respects \n in content.js */
+  }
+  
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(8px, 1vw, 18px);
+    width: 100%;
+  }
+  
+  .video-card {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+    overflow: hidden;
+    background: var(--card-contained-dark);
+    cursor: pointer;
+    transition: transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .video-card:hover { transform: scale(var(--scale-video)); }
+  .video-card img,
+  .video-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .video-card-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: var(--space-sm);
+    font-family: var(--font-brand);
+    font-size: 0.875rem;
+    color: var(--off-white);
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7) 100%);
+  }
+  
+  
+  /* ==========================================================================
+     FILTER ROWS — categories and products
+     Used in BOTH the videos and collection views.
+     ========================================================================== */
+  .filter-row {
+    padding: var(--space-md) var(--margin-page);
+    flex-shrink: 0;
+  }
+  .filter-row-label {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--off-white);
+    margin-bottom: var(--space-sm);
+  }
+  
+  .filter-buttons {
+    display: grid;
+    gap: var(--gutter);
+  }
+  .filter-btn {
+    background: var(--card-contained-dark);
+    border-radius: var(--card-radius);
+    padding: var(--space-md) var(--space-sm);
+    min-height: 72px;                /* fixed height; width flows with the grid */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: var(--font-brand);
+    font-size: clamp(11px, 0.85vw, 15px);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--off-white);
+    transition: background-color 200ms ease,
+                transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
+    border: 1px solid transparent;
+    will-change: transform;
+  }
+  .filter-btn:hover {
+    background: var(--card-emphasized-dark);
+    transform: scale(var(--scale-category));
+  }
+  .filter-btn-active {
+    border-color: var(--off-white);
+  }
+  
+  .filter-row-products { padding-bottom: var(--space-lg); }
+  
+  .products-row {
+    display: grid;
+    gap: 12px;
+  }
+  .product-card {
+    background: var(--card-contained-dark);
+    border-radius: var(--card-radius);
+    padding: var(--space-sm) var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    text-align: center;
+    transition: background-color 200ms ease,
+                transform 250ms cubic-bezier(0.2, 0, 0.2, 1);
+    min-height: 140px;
+    border: 1px solid transparent;
+    will-change: transform;
+  }
+  .product-card:hover {
+    background: var(--card-emphasized-dark);
+    transform: scale(var(--scale-product));
+  }
+  .product-card-active { border-color: var(--off-white); }
+  
+  .product-icon {
+    width: clamp(48px, 4vw, 64px);
+    height: clamp(48px, 4vw, 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .product-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .product-label {
+    font-family: var(--font-brand);
+    font-weight: 600;
+    font-size: clamp(9px, 0.65vw, 12px);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--off-white);
+  }
+  
+  
+  /* ==========================================================================
+     VIEW: DEMOS
+     ========================================================================== */
+  .view-demos { overflow-y: auto; }
+  
+  /* Topbar with back button on the left, Video/Demos toggle on the right */
+  .topbar-split {
+    justify-content: space-between;
+  }
+  
+  /* Back button for the Demos view (standalone on the left) */
+  .demos-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--off-white);
+    font-weight: 400;
+    font-size: clamp(14px, 1.1vw, 24px);
+    transition: opacity 200ms ease;
+  }
+  .demos-back-btn:hover { opacity: 0.75; }
+  .nav-back-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  
+  .demos-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: 0 var(--space-md) var(--space-lg);
+  }
+  
+  /* "DEMOS" gradient stamp title */
+  .demos-title {
+    font-size: clamp(32px, 2.5vw, 48px);
+    line-height: 0.7;
+    letter-spacing: -0.02em;
+    padding: 0.18em 0.12em 0.24em;
+    display: inline-block;
+    align-self: flex-start;
+  }
+  
+  .demos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  
+  /* Demo card — new design: dark card with rotated screenshot peek at right */
+  .demo-card {
+    background: #1b2c42;
+    height: 176px;
+    overflow: hidden;
+    padding: 24px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    border-radius: 0;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 200ms ease,
+                transform 300ms cubic-bezier(0.2, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .demo-card:hover {
+    background: var(--card-emphasized-dark);
+    transform: scale(var(--scale-demo));
+  }
+  
+  /* Absolutely-positioned rotated screenshot on the right side of each card */
+  .demo-card-screenshot {
+    position: absolute;
+    left: 46%;
+    top: -36px;
+    width: 62%;
+    height: 310px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .demo-card-screenshot-rotate {
+    transform: rotate(-30deg);
+    flex-shrink: 0;
+  }
+  .demo-card-screenshot-frame {
+    width: 299px;
+    height: 183px;
+    overflow: hidden;
+    border-radius: 0 0 30px 30px;
+    background: var(--card-emphasized-dark);
+    position: relative;
+  }
+  .demo-card-screenshot-frame img,
+  .demo-card-screenshot-frame video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  .demo-card-title {
+    font-family: var(--font-brand);
+    font-weight: 500;
+    font-size: clamp(14px, 1.2vw, 24px);
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--off-white);
+    max-width: 55%;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0;
+  }
+  .demo-card-subtitle {
+    font-family: var(--font-brand);
+    font-weight: 300;
+    font-size: clamp(11px, 0.85vw, 16px);
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.05;
+    max-width: 50%;
+    position: relative;
+    z-index: 1;
+  }
+  
+  
+  /* ==========================================================================
+     VIEW: PLAYER (fullscreen)
+     ========================================================================== */
+  .view-player {
+    background: #000;
+    position: relative;
+    left: 0;                  /* override .view default: fullscreen video uses the full width */
+    width: 100%;
+  }
+  
+  .player-topbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--margin-page);
+  }
+  .player-lang-toggle { display: flex; gap: var(--space-sm); }
+  .lang-btn {
+    font-family: var(--font-brand);
+    font-size: clamp(14px, 1.1vw, 20px);
+    font-weight: 300;
+    color: var(--light-gray);
+    padding: var(--space-xs);
+    transition: color 200ms ease;
+  }
+  .lang-btn:hover { color: var(--off-white); }
+  .lang-btn-active {
+    color: var(--off-white);
+    font-weight: 700;
+  }
+  .player-back {
+    font-family: var(--font-brand);
+    font-size: clamp(14px, 1.1vw, 20px);
+    color: var(--off-white);
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+  
+  .player-stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #player-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;     /* fill viewport, preserve aspect ratio */
+  }
+  
+  .player-fallback {
+    text-align: center;
+    color: var(--light-gray);
+    padding: var(--space-lg);
+    max-width: 60ch;
+  }
+  .player-fallback-title {
+    font-family: var(--font-brand-condensed);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(20px, 2vw, 36px);
+    color: var(--off-white);
+    margin-bottom: var(--space-md);
+  }
+  .player-fallback-msg code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+  
+  
+  /* ==========================================================================
+     PLACEHOLDER STATES — when image / video files are missing
+     ========================================================================== */
+  .is-missing {
+    width: 100%;
+    height: 100%;
+    min-height: 80px;
+    background: var(--card-emphasized-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--light-gray);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .is-missing::after { content: "Thumbnail missing"; }
+  
+  
+  /* ==========================================================================
+     ACCESSIBILITY — respect the user's OS-level reduced-motion preference
+     When set, we disable both view transitions AND hover scale.
+     ========================================================================== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .view, .view.is-active { transform: none !important; }
+    .hero-card:hover, .filter-btn:hover,
+    .product-card:hover, .video-card:hover, .demo-card:hover {
+      transform: none !important;
+    }
+  }
+  
+  
+  /* ==========================================================================
+     RESPONSIVE TWEAKS — works at 4:3, 16:9, 16:10, and 21:9
+     ========================================================================== */
+  @media (max-width: 1280px) {
+    :root {
+      --margin-page: 48px;
+      --topbar-height: 80px;
+      --sidenav-width: 56px;
+    }
+    .sidenav-iris { width: 32px; height: 32px; }
+  }
+  @media (max-width: 900px) {
+    :root {
+      --margin-page: 24px;
+      --gutter: 16px;
+      --sidenav-width: 48px;
+    }
+    .sidenav-iris { width: 28px; height: 28px; }
+    .videos-main { grid-template-columns: 1fr; gap: var(--space-md); }
+    .collection-grid { grid-template-columns: repeat(2, 1fr); }
+    .demos-grid { grid-template-columns: 1fr 1fr; }
+    .demo-card-title { max-width: 60%; }
+    .demo-card-subtitle { max-width: 55%; }
+  }
+  
