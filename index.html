@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presight — Video Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========================================================
+       SHARED INLINE SVG DEFINITIONS
+       Defined once, referenced anywhere via url(#presight-gradient).
+       ======================================================== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="presight-gradient" x1="0%" y1="50%" x2="100%" y2="50%">
+        <stop offset="0%" stop-color="#B7D9FF"/>
+        <stop offset="50%" stop-color="#53C9D0"/>
+        <stop offset="100%" stop-color="#35AF6F"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+
+  <!-- ========================================================
+       UNIVERSAL NAV — fixed left sidebar with iris mark.
+       Sits outside all views so it persists across transitions.
+       ======================================================== -->
+  <aside class="sidenav" aria-label="Presight">
+    <img class="sidenav-iris" src="assets/iris.svg" alt="Presight" />
+  </aside>
+
+
+  <!-- ========================================================
+       VIEW 1: VIDEOS — ENTRY POINT
+       This is where visitors land. The "Video | Demos" toggle in the
+       top-right is the primary navigation between the two main branches.
+       The categories and products rows let visitors jump to any collection.
+       ======================================================== -->
+  <section class="view view-videos is-active" data-view="videos">
+
+    <header class="topbar">
+      <nav class="topbar-nav">
+        <button class="nav-link nav-link-active" data-action="goto-videos">Video</button>
+        <button class="nav-link" data-action="goto-demos">Demos</button>
+      </nav>
+    </header>
+
+    <main class="videos-main">
+      <div class="videos-hero">
+        <img class="videos-hero-logo" src="assets/logo.svg" alt="Presight — A G42 company">
+        <h1 class="videos-headline">
+          <span class="declarative">INTELLIGENCE.</span>
+          <span class="declarative gradient-stamp">APPLIED.</span>
+        </h1>
+        <p class="videos-tagline">
+          Presight delivers intelligence designed to work in real-world conditions—intelligence that supports decisions, enables execution, and delivers measurable outcomes.
+        </p>
+      </div>
+      <button class="hero-card" data-action="play-hero">
+        <video class="hero-thumb" id="hero-thumb"
+               muted autoplay loop playsinline preload="metadata"
+               disablepictureinpicture></video>
+        <div class="hero-caption">
+          <span class="hero-caption-text" id="hero-title"></span>
+        </div>
+      </button>
+    </main>
+
+    <section class="filter-row">
+      <h2 class="filter-row-label technical">Categories</h2>
+      <div class="filter-buttons categories-row"></div>
+    </section>
+
+    <section class="filter-row filter-row-products">
+      <h2 class="filter-row-label technical">Products</h2>
+      <div class="products-row products-row-grid"></div>
+    </section>
+
+  </section>
+
+
+  <!-- ========================================================
+       VIEW 2: COLLECTION — a distinct screen for any single category
+       or product. One template, populated dynamically based on which
+       collection was opened. Back button returns to the videos hero.
+       ======================================================== -->
+  <section class="view view-collection" data-view="collection">
+
+    <header class="topbar">
+      <nav class="topbar-nav">
+        <button class="nav-link nav-back" data-action="goto-videos">
+          <span class="nav-arrow" aria-hidden="true">←</span> Back
+        </button>
+        <button class="nav-link nav-link-active" data-action="goto-videos">Video</button>
+        <button class="nav-link" data-action="goto-demos">Demos</button>
+      </nav>
+    </header>
+
+    <main class="collection-main">
+      <div class="collection-text">
+        <h1 class="collection-title declarative" id="collection-title"></h1>
+        <p class="collection-description" id="collection-description"></p>
+      </div>
+      <div class="collection-grid" id="collection-grid"></div>
+    </main>
+
+    <section class="filter-row">
+      <h2 class="filter-row-label technical">Categories</h2>
+      <div class="filter-buttons categories-row"></div>
+    </section>
+
+    <section class="filter-row filter-row-products">
+      <h2 class="filter-row-label technical">Products</h2>
+      <div class="products-row products-row-grid"></div>
+    </section>
+
+  </section>
+
+
+  <!-- ========================================================
+       VIEW 3: DEMOS — distinct collection. Back goes to videos.
+       ======================================================== -->
+  <section class="view view-demos" data-view="demos">
+
+    <header class="topbar">
+      <nav class="topbar-nav">
+        <button class="nav-link nav-back" data-action="goto-videos">
+          <span class="nav-arrow" aria-hidden="true">←</span> Back
+        </button>
+        <button class="nav-link" data-action="goto-videos">Video</button>
+        <button class="nav-link nav-link-active" data-action="goto-demos">Demos</button>
+      </nav>
+    </header>
+
+    <main class="demos-main">
+      <div class="demos-title-block">
+        <span class="demos-title-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <rect x="10" y="14" width="44" height="36" rx="4" fill="url(#presight-gradient)"/>
+            <polygon points="26,24 26,40 40,32" fill="#162235"/>
+          </svg>
+        </span>
+        <h1 class="demos-title declarative">DEMOS</h1>
+      </div>
+      <div class="demos-grid" id="demos-grid"></div>
+    </main>
+
+  </section>
+
+
+  <!-- ========================================================
+       VIEW 4: FULLSCREEN PLAYER. Back returns to the previous view.
+       ======================================================== -->
+  <section class="view view-player" data-view="player">
+    <header class="player-topbar">
+      <div class="player-lang-toggle">
+        <button class="lang-btn lang-btn-active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ar">AR</button>
+      </div>
+      <button class="player-back" data-action="player-back">Back <span aria-hidden="true">←</span></button>
+    </header>
+
+    <div class="player-stage">
+      <video id="player-video" controls preload="metadata"></video>
+
+      <div class="player-fallback" id="player-fallback" hidden>
+        <p class="player-fallback-title" id="player-fallback-title"></p>
+        <p class="player-fallback-msg">
+          Video file not found. Drop the file into the <code>/videos</code> folder
+          and refresh, or update the path in <code>content.js</code>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <script src="content.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
