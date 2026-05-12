@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Generic placeholder icon. Replace with real product icons (one SVG per product). -->
+  <circle cx="32" cy="32" r="20" stroke="#162235" stroke-width="2.5" fill="none"/>
+  <circle cx="32" cy="32" r="12" stroke="#162235" stroke-width="2" fill="none" opacity="0.6"/>
+  <circle cx="32" cy="32" r="4" fill="#162235"/>
+</svg>
