@@ -99,11 +99,9 @@
     </header>
 
     <main class="collection-main">
-      <div class="collection-text">
-        <h1 class="collection-title declarative" id="collection-title"></h1>
-        <p class="collection-description" id="collection-description"></p>
-      </div>
+      <h1 class="collection-title declarative gradient-stamp" id="collection-title"></h1>
       <div class="collection-grid" id="collection-grid"></div>
+      <p class="collection-description" id="collection-description"></p>
     </main>
 
     <section class="filter-row">
@@ -124,26 +122,21 @@
        ======================================================== -->
   <section class="view view-demos" data-view="demos">
 
-    <header class="topbar">
+    <header class="topbar topbar-split">
+      <button class="nav-link demos-back-btn" data-action="goto-videos">
+        <svg class="nav-back-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20 12H4M4 12l6-6M4 12l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
       <nav class="topbar-nav">
-        <button class="nav-link nav-back" data-action="goto-videos">
-          <span class="nav-arrow" aria-hidden="true">←</span> Back
-        </button>
         <button class="nav-link" data-action="goto-videos">Video</button>
         <button class="nav-link nav-link-active" data-action="goto-demos">Demos</button>
       </nav>
     </header>
 
     <main class="demos-main">
-      <div class="demos-title-block">
-        <span class="demos-title-icon" aria-hidden="true">
-          <svg viewBox="0 0 64 64">
-            <rect x="10" y="14" width="44" height="36" rx="4" fill="url(#presight-gradient)"/>
-            <polygon points="26,24 26,40 40,32" fill="#162235"/>
-          </svg>
-        </span>
-        <h1 class="demos-title declarative">DEMOS</h1>
-      </div>
+      <h1 class="demos-title declarative gradient-stamp">DEMOS</h1>
       <div class="demos-grid" id="demos-grid"></div>
     </main>
 
